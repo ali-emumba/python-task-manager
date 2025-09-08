@@ -1,0 +1,67 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+.eggs/
+.parts/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.venv
+venv/
+ENV/
+env/
+
+# Environment variables file
+.env.local
+.env.*.backup
+
+# Pytest
+.pytest_cache/
+
+# Mypy / Pyre / etc
+.mypy_cache/
+.pyre/
+
+# Ruff / Black caches
+.ruff_cache/
+
+# VSCode
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Alembic
+migrations/versions/__pycache__/
+
+# SQLite (if used for testing)
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+.cache
+
+# Misc
+.DS_Store
+Thumbs.db
