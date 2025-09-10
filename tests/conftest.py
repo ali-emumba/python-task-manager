@@ -10,7 +10,13 @@ from app.models.user import User, UserRole, Base  # include Base here
 from app.models.task import Task
 from app.core.security import get_password_hash
 
-TEST_DB_URL = "sqlite:///./test.db"
+# Use writable location inside container
+TEST_DB_PATH = "/tmp/test.db"
+TEST_DB_URL = f"sqlite:///{TEST_DB_PATH}"
+
+# Ensure clean slate each test run (optional: remove old file)
+if os.path.exists(TEST_DB_PATH):
+    os.remove(TEST_DB_PATH)
 
 engine = create_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)

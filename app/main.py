@@ -7,7 +7,11 @@ from app.db.session import get_db
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-import time
+import time, uuid, logging
+from app.core.logging import setup_logging
+
+setup_logging()
+logger = logging.getLogger("app")
 
 app = FastAPI(title=settings.PROJECT_NAME)
 
@@ -53,8 +57,58 @@ class RequestTimingMiddleware(BaseHTTPMiddleware):
         response.headers["X-Process-Time-ms"] = f"{duration:.2f}"
         return response
 
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        cid = str(uuid.uuid4())
+        request.state.correlation_id = cid
+        client = request.client.host if request.client else None
+        logger.info(
+            "request_start",
+            extra={
+                "cid": cid,
+                "method": request.method,
+                "path": request.url.path,
+                "client_addr": client,
+            },
+        )
+        start = time.time()
+        try:
+            response = await call_next(request)
+        except Exception:
+            duration = (time.time() - start) * 1000
+            user_id = getattr(request.state, "user_id", None)
+            logger.exception(
+                "request_error",
+                extra={
+                    "cid": cid,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "client_addr": client,
+                    "duration_ms": round(duration, 2),
+                    "user_id": user_id,
+                },
+            )
+            raise
+        duration = (time.time() - start) * 1000
+        user_id = getattr(request.state, "user_id", None)
+        logger.info(
+            "request_end",
+            extra={
+                "cid": cid,
+                "method": request.method,
+                "path": request.url.path,
+                "status": response.status_code,
+                "client_addr": client,
+                "duration_ms": round(duration, 2),
+                "user_id": user_id,
+            },
+        )
+        response.headers["X-Correlation-Id"] = cid
+        return response
+
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestTimingMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(auth.router)
 app.include_router(users.router)
