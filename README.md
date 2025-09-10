@@ -2,6 +2,58 @@
 
 Backend API built with FastAPI. Provides secure task management with JWT auth.
 
+## Getting Started After Cloning
+
+1. Clone:
+   ```bash
+   git clone <repo-url>
+   cd python-task-manager
+   ```
+2. Create environment file:
+   - Copy `.env.example` to `.env` (or create manually) and set at least:
+     - `POSTGRES_USER=postgres`
+     - `POSTGRES_PASSWORD=postgres`
+     - `POSTGRES_DB=tasktracker`
+     - `JWT_SECRET_KEY=<generate a long random secret>`
+     - (Optional) `DATABASE_URL=postgresql+psycopg2://postgres:postgres@localhost:5432/tasktracker` for local (non‑Docker) run.
+3. Choose a run mode:
+   - Docker (recommended quickest):
+     ```bash
+     docker compose up --build
+     ```
+     This builds the image, runs Alembic migrations automatically, and starts the API on http://localhost:8000.
+   - Local (needs a running Postgres):
+     ```bash
+     python -m venv .venv
+     # PowerShell
+     . .venv/Scripts/Activate.ps1
+     pip install -e .[dev]
+     createdb tasktracker   # or: psql -U postgres -c "CREATE DATABASE tasktracker;"
+     alembic upgrade head
+     uvicorn app.main:app --reload
+     ```
+4. (Optional) Seed base data (3 users + tasks) AFTER containers/local app can reach DB:
+   - Docker:
+     ```bash
+     docker compose exec app python -m seeds.seed_data --base
+     ```
+   - Local:
+     ```bash
+     python -m seeds.seed_data --base
+     ```
+     Admin user from seed: `alice@example.com` / `Password1!`
+5. Run tests (local dev environment recommended):
+   ```bash
+   pytest
+   ```
+6. Explore docs: http://localhost:8000/docs
+
+Troubleshooting quick notes:
+
+- If `ModuleNotFoundError: app` when seeding: use `python -m seeds.seed_data` (ensures proper module path).
+- If Postgres connection fails in Docker: ensure `POSTGRES_*` vars in `.env` match `docker-compose.yml` and no stale volume conflicts; recreate with `docker compose down -v && docker compose up --build`.
+- If redirect 307 logs lack user_id: call canonical path with trailing slash (e.g. `/tasks/`).
+
 ## Quickstart (Local Dev)
 
 ```bash
