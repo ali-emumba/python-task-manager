@@ -42,4 +42,4 @@ EXPOSE 8000
 ENV PORT=8000
 
 # Use gunicorn with uvicorn workers; run migrations first
-ENTRYPOINT ["sh", "-c", "python -c 'import alembic_runner; alembic_runner.run_migrations()' && uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4"]
+ENTRYPOINT ["sh", "-c", "python -c 'import alembic_runner; alembic_runner.run_migrations()' && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4"]
