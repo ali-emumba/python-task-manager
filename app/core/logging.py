@@ -1,11 +1,13 @@
 import logging, sys, json, os
-from datetime import datetime
+from datetime import datetime, timezone
 from app.core.config import settings
+from starlette.requests import Request
+from typing import Optional, Dict, Any
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:  # type: ignore[override]
         data = {
-            "ts": datetime.utcfromtimestamp(record.created).isoformat() + "Z",
+            "ts": datetime.fromtimestamp(record.created, timezone.utc).isoformat().replace('+00:00', 'Z'),
             "level": record.levelname,
             "logger": record.name,
             "msg": record.getMessage(),
@@ -51,3 +53,41 @@ def setup_logging():
         lg.handlers = []  # clear their default handlers
         lg.propagate = True
         lg.setLevel(level)
+
+def log_business_step(
+    step: str,
+    details: Optional[Dict[str, Any]] = None,
+    request: Optional[Request] = None,
+    user_id: Optional[int] = None,
+    level: str = "info"
+):
+    """
+    Log business logic steps with consistent format
+    
+    Args:
+        step: Description of the business step (e.g., "user_registration_start")
+        details: Additional context data
+        request: Request object to extract correlation ID
+        user_id: User ID if available
+        level: Log level (info, warning, error)
+    """
+    logger = logging.getLogger("business")
+    
+    extra_data = {
+        "business_step": step,
+        **(details or {})
+    }
+    
+    # Add correlation ID from request if available
+    if request and hasattr(request.state, 'correlation_id'):
+        extra_data["cid"] = request.state.correlation_id
+    
+    # Add user ID
+    if user_id:
+        extra_data["user_id"] = user_id
+    elif request and hasattr(request.state, 'user_id'):
+        extra_data["user_id"] = request.state.user_id
+    
+    # Log at appropriate level
+    log_method = getattr(logger, level.lower(), logger.info)
+    log_method(f"Business: {step}", extra=extra_data)

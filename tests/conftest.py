@@ -1,4 +1,5 @@
 import os
+import tempfile
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -10,8 +11,8 @@ from app.models.user import User, UserRole, Base  # include Base here
 from app.models.task import Task
 from app.core.security import get_password_hash
 
-# Use writable location inside container
-TEST_DB_PATH = "/tmp/test.db"
+# Use cross-platform temporary file
+TEST_DB_PATH = os.path.join(tempfile.gettempdir(), "test.db")
 TEST_DB_URL = f"sqlite:///{TEST_DB_PATH}"
 
 # Ensure clean slate each test run (optional: remove old file)
